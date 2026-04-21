@@ -1,0 +1,227 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{ company }} — Alfred campaign proposals</title>
+  <style>
+    :root {
+      --bg: #0e0e12;
+      --panel: #16161d;
+      --panel-2: #1d1d26;
+      --ink: #f6f6f7;
+      --ink-dim: #a5a5b0;
+      --accent: #f5c542;
+      --conservative: #6aa6ff;
+      --balanced: #8affc1;
+      --bold: #ff6b9d;
+      --border: #2a2a36;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif; line-height: 1.55; }
+    a { color: var(--accent); }
+    .wrap { max-width: 1200px; margin: 0 auto; padding: 0 28px 96px; }
+    header.hero { padding: 48px 0 28px; border-bottom: 1px solid var(--border); margin-bottom: 0; }
+    .eyebrow { letter-spacing: 0.18em; text-transform: uppercase; color: var(--accent); font-size: 12px; font-weight: 600; }
+    h1 { font-size: clamp(36px, 5vw, 56px); margin: 8px 0 6px; letter-spacing: -0.02em; }
+    .oneliner { font-size: 18px; color: var(--ink-dim); max-width: 820px; margin: 0; }
+    h2 { font-size: 22px; letter-spacing: -0.01em; margin: 0 0 20px; }
+    h3 { font-size: 16px; letter-spacing: 0.02em; margin: 0 0 10px; color: var(--ink-dim); text-transform: uppercase; }
+
+    /* ── Tab nav ── */
+    .tab-nav { display: flex; gap: 4px; flex-wrap: wrap; padding: 16px 0; border-bottom: 1px solid var(--border); margin-bottom: 40px; position: sticky; top: 0; background: var(--bg); z-index: 10; }
+    .tab-btn { background: var(--panel); border: 1px solid var(--border); border-radius: 999px; padding: 7px 16px; font-size: 13px; font-weight: 500; color: var(--ink-dim); cursor: pointer; transition: background 0.15s, color 0.15s, border-color 0.15s; white-space: nowrap; }
+    .tab-btn:hover { color: var(--ink); border-color: #444; }
+    .tab-btn.active { background: var(--accent); border-color: var(--accent); color: #0e0e12; font-weight: 700; }
+    .tab-btn.tier-Conservative.active { background: var(--conservative); border-color: var(--conservative); }
+    .tab-btn.tier-Balanced.active { background: var(--balanced); border-color: var(--balanced); }
+    .tab-btn.tier-Bold.active { background: var(--bold); border-color: var(--bold); }
+
+    /* ── Panels ── */
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+
+    /* ── Dossier ── */
+    .dossier { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; }
+    .card { background: var(--panel); border: 1px solid var(--border); border-radius: 14px; padding: 20px; }
+    .card ul { margin: 0; padding-left: 18px; color: var(--ink); }
+    .card li { margin-bottom: 4px; }
+    .card p { margin: 0; }
+
+    /* ── Campaign history ── */
+    .campaign-history { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; }
+    .hist-card { background: var(--panel); border: 1px solid var(--border); border-radius: 14px; padding: 20px; display: flex; flex-direction: column; gap: 10px; }
+    .hist-card .hist-name { font-size: 17px; font-weight: 600; margin: 0; letter-spacing: -0.01em; }
+    .hist-card .hist-years { font-size: 12px; color: var(--accent); font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; }
+    .hist-card .hist-concept { font-size: 14px; color: var(--ink); margin: 0; }
+    .hist-card .hist-outcome { font-size: 13px; color: var(--ink-dim); border-left: 2px solid var(--border); padding-left: 10px; margin: 0; }
+    .hist-card .hist-significance { font-size: 13px; color: var(--ink-dim); font-style: italic; margin: 0; }
+
+    /* ── Personas ── */
+    .personas { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; }
+    .persona h4 { margin: 0 0 8px; font-size: 17px; }
+    .persona .meta { font-size: 13px; color: var(--ink-dim); margin-bottom: 10px; }
+
+    /* ── Single campaign ── */
+    .campaign-single { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; align-items: start; }
+    @media (max-width: 780px) { .campaign-single { grid-template-columns: 1fr; } }
+    .campaign-single .left { display: flex; flex-direction: column; gap: 18px; }
+    .campaign-single .right { display: flex; flex-direction: column; gap: 18px; }
+    .tier-badge { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 999px; font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; font-weight: 700; }
+    .tier-Conservative { background: rgba(106,166,255,0.14); color: var(--conservative); }
+    .tier-Balanced { background: rgba(138,255,193,0.12); color: var(--balanced); }
+    .tier-Bold { background: rgba(255,107,157,0.14); color: var(--bold); }
+    .campaign-name { font-size: 32px; margin: 6px 0 0; letter-spacing: -0.02em; font-weight: 700; }
+    .tagline { color: var(--accent); font-style: italic; font-size: 16px; margin: 0; }
+    .mockup-frame { background: var(--panel-2); border-radius: 12px; padding: 16px; display: flex; justify-content: center; }
+    .mockup-frame img { max-width: 100%; border-radius: 8px; display: block; }
+    .kv { display: grid; grid-template-columns: 110px 1fr; gap: 6px 14px; font-size: 14px; }
+    .kv dt { color: var(--ink-dim); font-weight: 500; }
+    .kv dd { margin: 0; }
+    .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+    .chip { background: var(--panel-2); border: 1px solid var(--border); padding: 3px 9px; border-radius: 999px; font-size: 12px; color: var(--ink-dim); }
+    .rationale { border-left: 2px solid var(--accent); padding-left: 14px; color: var(--ink-dim); font-size: 14px; }
+    .section-card { background: var(--panel); border: 1px solid var(--border); border-radius: 14px; padding: 20px; }
+
+    /* ── Sources ── */
+    .sources { margin-top: 40px; font-size: 13px; color: var(--ink-dim); word-break: break-all; }
+    .sources li { margin-bottom: 4px; }
+    footer { margin-top: 64px; color: var(--ink-dim); font-size: 12px; text-align: center; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header class="hero">
+      <div class="eyebrow">Alfred · agentic campaign deck</div>
+      <h1>{{ company }}</h1>
+      <p class="oneliner">{{ dossier.one_liner }}</p>
+    </header>
+
+    <nav class="tab-nav" id="tabNav">
+      <button class="tab-btn active" data-tab="brief">Brief</button>
+      {% if past_campaigns %}<button class="tab-btn" data-tab="history">Ad History</button>{% endif %}
+      <button class="tab-btn" data-tab="personas">Personas</button>
+      {% for c in campaigns %}
+      <button class="tab-btn tier-{{ c.tier_name }}" data-tab="campaign-{{ c.tier_name | lower }}">{{ c.tier_name }}</button>
+      {% endfor %}
+    </nav>
+
+    <!-- Brief -->
+    <div class="tab-panel active" id="panel-brief">
+      <h2>Dossier</h2>
+      <div class="dossier">
+        <div class="card"><h3>Industry</h3><p>{{ dossier.industry }}</p></div>
+        <div class="card"><h3>Positioning</h3><p>{{ dossier.positioning }}</p></div>
+        <div class="card"><h3>Brand voice</h3><p>{{ dossier.brand_voice }}</p></div>
+        <div class="card"><h3>Products</h3><ul>{% for p in dossier.products %}<li>{{ p }}</li>{% endfor %}</ul></div>
+        <div class="card"><h3>Competitors</h3><ul>{% for c in dossier.competitors %}<li>{{ c }}</li>{% endfor %}</ul></div>
+        <div class="card"><h3>Audience hints</h3><ul>{% for a in dossier.audience_hints %}<li>{{ a }}</li>{% endfor %}</ul></div>
+        <div class="card"><h3>Recent news</h3><ul>{% for n in dossier.recent_news %}<li>{{ n }}</li>{% endfor %}</ul></div>
+        <div class="card"><h3>Opportunities</h3><ul>{% for o in dossier.opportunities %}<li>{{ o }}</li>{% endfor %}</ul></div>
+      </div>
+      <section class="sources">
+        <h2 style="font-size:16px;margin-top:40px;">Sources</h2>
+        <ul>{% for s in dossier.sources %}<li><a href="{{ s }}">{{ s }}</a></li>{% endfor %}</ul>
+      </section>
+    </div>
+
+    <!-- Ad History -->
+    {% if past_campaigns %}
+    <div class="tab-panel" id="panel-history">
+      <h2>Campaign history</h2>
+      <div class="campaign-history">
+        {% for h in past_campaigns %}
+        <div class="hist-card">
+          <div>
+            <span class="hist-years">{{ h.years }}</span>
+            <p class="hist-name">{{ h.name }}</p>
+          </div>
+          <p class="hist-concept">{{ h.concept }}</p>
+          <div class="chips">{% for ch in h.channels %}<span class="chip">{{ ch }}</span>{% endfor %}</div>
+          <p class="hist-outcome"><strong style="color:var(--ink);">Result:</strong> {{ h.outcome }}</p>
+          <p class="hist-significance">{{ h.significance }}</p>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- Personas -->
+    <div class="tab-panel" id="panel-personas">
+      <h2>Target personas</h2>
+      <div class="personas">
+        {% for p in personas %}
+        <div class="card persona">
+          <h4>{{ p.name }}</h4>
+          <div class="meta">{{ p.demographics }}</div>
+          <p style="margin:0 0 10px;">{{ p.psychographics }}</p>
+          <div class="chips">{% for m in p.media_diet %}<span class="chip">{{ m }}</span>{% endfor %}</div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- One panel per campaign -->
+    {% for c in campaigns %}
+    <div class="tab-panel" id="panel-campaign-{{ c.tier_name | lower }}">
+      <div style="display:flex;align-items:center;gap:14px;margin-bottom:6px;">
+        <span class="tier-badge tier-{{ c.tier_name }}">{{ c.tier_name }}</span>
+      </div>
+      <h2 class="campaign-name">{{ c.brief.name }}</h2>
+      <p class="tagline" style="margin-bottom:32px;">"{{ c.brief.tagline }}"</p>
+
+      <div class="campaign-single">
+        <div class="left">
+          <div class="mockup-frame">{{ c.ad_html }}</div>
+          <div class="section-card">
+            <h3>Channels</h3>
+            <div class="chips">{% for ch in c.brief.channels %}<span class="chip">{{ ch }}</span>{% endfor %}</div>
+          </div>
+          <div class="section-card rationale" style="background:var(--panel);border-radius:14px;padding:20px;">
+            <strong style="color:var(--ink);display:block;margin-bottom:6px;">Rationale</strong>
+            {{ c.brief.rationale }}
+          </div>
+        </div>
+        <div class="right">
+          <div class="section-card">
+            <h3>Campaign brief</h3>
+            <dl class="kv">
+              <dt>Big idea</dt><dd>{{ c.brief.big_idea }}</dd>
+              <dt>Audience</dt><dd>{{ c.brief.target_persona }}</dd>
+              <dt>Tone</dt><dd>{{ c.brief.tone }}</dd>
+            </dl>
+          </div>
+          <div class="section-card">
+            <h3>Copy</h3>
+            <dl class="kv">
+              <dt>Headline</dt><dd>{{ c.brief.headline }}</dd>
+              <dt>Body</dt><dd>{{ c.brief.body_copy }}</dd>
+              <dt>CTA</dt><dd>{{ c.brief.cta }}</dd>
+            </dl>
+          </div>
+          <div class="section-card">
+            <h3>Visual direction</h3>
+            <p style="margin:0;font-size:14px;color:var(--ink-dim);">{{ c.brief.visual_direction }}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+
+    <footer>Generated by Alfred · {{ campaigns|length }} campaigns · {{ dossier.sources|length }} sources</footer>
+  </div>
+
+  <script>
+    const nav = document.getElementById('tabNav');
+    nav.addEventListener('click', e => {
+      const btn = e.target.closest('.tab-btn');
+      if (!btn) return;
+      const target = btn.dataset.tab;
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById('panel-' + target).classList.add('active');
+    });
+  </script>
+</body>
+</html>

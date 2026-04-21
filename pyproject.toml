@@ -1,29 +1,33 @@
 [project]
-name = "coca-cola-portfolio"
+name = "alfred"
 version = "0.1.0"
-description = "Coca-Cola ad analysis portfolio using BAML + Claude AI"
+description = "Agentic ad-campaign generator — company name in, three campaign proposals out."
 readme = "README.md"
-requires-python = ">=3.11"
+requires-python = ">=3.12"
 dependencies = [
-    "anthropic>=0.40.0",       # Claude API client
-    "baml-py>=0.75.0",         # BAML Python runtime (runs your .baml functions)
-    "jinja2>=3.1.0",           # HTML template engine
-    "weasyprint>=62.0",        # HTML → PDF converter
-    "requests>=2.31.0",        # HTTP requests (optional, for fetching images)
-    "typer>=0.12.0",           # CLI framework — borrowed from Alfred
-    "python-dotenv>=1.0.0",    # Load .env file — borrowed from Alfred
-    "openai>=1.0.0",           # Optional: gpt-image-1 image backend (Alfred pattern)
+    "anthropic>=0.40.0",
+    "baml-py>=0.75.0",
+    "jinja2>=3.1.4",
+    "openai>=1.55.0",
+    "python-dotenv>=1.0.1",
+    "typer>=0.15.0",
+    "httpx>=0.27.0",
+    "pydantic>=2.9.0",
+    "replicate>=1.0.0",
 ]
 
-# CLI entry point — borrowed from Alfred.
-# After `uv sync`, you can run: uv run portfolio
-# Instead of: uv run python src/main.py
 [project.scripts]
-portfolio = "cli:main"
+alfred = "alfred.cli:app"
 
-[tool.uv]
-# Add src/ to the Python path so `uv run portfolio` finds cli.py
-pythonpath = ["src"]
-dev-dependencies = [
-    "ruff>=0.1.0",             # Code linter/formatter (optional but helpful)
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["alfred"]
+
+[tool.hatch.build]
+include = [
+    "alfred/**/*.py",
+    "templates/*.j2",
 ]

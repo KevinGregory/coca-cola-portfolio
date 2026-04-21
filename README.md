@@ -1,145 +1,112 @@
-# Coca-Cola Ad Analysis Portfolio
+# Alfred
 
-A portfolio project that uses **Claude AI** (via BAML) to analyze iconic Coca-Cola campaigns.
-Heavily inspired by **[Alfred](https://github.com/KevinGregory/alfred)** — same stack, same domain,
-several patterns borrowed and adapted directly.
+An agentic tool that turns a single input — a company name — into three differentiated ad campaign proposals (Conservative, Balanced, Bold), each with research-grounded strategy, ad copy, and a rendered creative mockup. One self-contained HTML report falls out the other end.
 
-Built with: **Python · BAML · UV · Jinja2 · WeasyPrint · Typer**
+Built with **Python + [BAML](https://docs.boundaryml.com/)** as a portfolio piece for an advertising-agency interview. The point is to show production use of modern agent tooling: web-search tool loops, typed LLM functions, parallel fan-out, and image generation — wired into one clean CLI.
 
----
+## What it does
 
-## What Alfred contributed to this project
-
-| Alfred pattern | How we use it |
-|---|---|
-| Web search agent loop (`research.py`) | Live campaign research via `claude web_search_20250305` |
-| Three campaign tiers in parallel | Conservative / Balanced / Bold improvement directions |
-| Opus for Bold, Sonnet for the rest | Tiered model routing in `campaign_tiers.baml` |
-| Image backends: stub / openai | SVG mockups by default, real images with `--backend openai` |
-| Typer CLI entry point | `uv run portfolio` with `--research`, `--tiers`, `--backend` flags |
-| `.env` file for secrets | `cp .env.example .env` instead of manual `export` |
-| Self-contained HTML report | Single-file output option |
-| `concurrent.futures` parallel fan-out | All three tiers run simultaneously — ~60% faster |
-
----
+```
+company name ─► research (Claude + web_search loop)
+             ─► structured dossier (BAML: ExtractDossier)
+             ─► audience personas (BAML: IdentifyPersonas)
+             ─► campaign history (BAML: AnalyzePastCampaigns)
+                  • 2–6 past campaigns with concept, channels, outcome, significance
+             ─► three campaigns in parallel:
+                  • Conservative (Sonnet) — play to existing brand equity
+                  • Balanced (Sonnet)     — one fresh mechanic, still on-brand
+                  • Bold (Opus)           — stunt-worthy, PR-bait
+                for each:
+                  ▸ GenerateCampaign      — typed CampaignBrief
+                  ▸ GenerateVisualPrompt  — image-gen prompt
+                  ▸ image backend         — gpt-image-1 / Flux / stub SVG
+                  ▸ RenderAdHTML          — inline-styled ad card
+             ─► out/<run>/report.html (tabbed: Brief · Ad History · Personas · per-campaign)
+```
 
 ## Setup
 
-### 1. Install UV
+This project is managed with [**uv**](https://docs.astral.sh/uv/). Install it first if you don't have it:
+
 ```bash
 curl -LsSf https://astral.sh/uv/install.sh | sh
+# or: brew install uv
 ```
 
-### 2. Install BAML CLI
-```bash
-uv tool install baml-cli
-```
+Then from the repo root:
 
-### 3. Install dependencies
 ```bash
-cd coca-cola-portfolio
+# 1. Sync dependencies into a local .venv (reads pyproject.toml + uv.lock).
 uv sync
-```
 
-### 4. Generate BAML client
-```bash
-baml-cli generate
-```
+# 2. Generate the BAML client code.
+uv run baml-cli generate
 
-### 5. Configure secrets (Alfred's pattern)
-```bash
+# 3. Configure secrets.
 cp .env.example .env
-# Open .env and add your ANTHROPIC_API_KEY
+# Fill in ANTHROPIC_API_KEY (+ OPENAI_API_KEY if using the default image backend).
 ```
 
----
+`uv sync` installs the exact versions pinned in `uv.lock`, so you get the same environment the project was developed against. Python 3.12+ is required; uv will fetch a matching interpreter automatically if you don't have one.
 
-## Usage
+## Run
 
-### Basic run (all 5 campaigns, stub SVG images)
 ```bash
-uv run portfolio
+uv run alfred "Liquid Death"
+# opens out/<timestamp>-liquid-death/report.html in your browser
 ```
 
-### One campaign only
+`uv run` executes the command inside the project's venv without needing to activate it. If you'd rather activate it once and drop the prefix, `source .venv/bin/activate` and then call `alfred ...` directly.
+
+Offline / no image API key:
+
 ```bash
-uv run portfolio share_a_coke
+uv run alfred "Liquid Death" --backend stub
 ```
-
-### Full pipeline — live research + three improvement tiers
-```bash
-uv run portfolio --research --tiers
-```
-
-### Real AI-generated images (requires OPENAI_API_KEY in .env)
-```bash
-uv run portfolio --backend openai
-```
-
-### All options
-```bash
-uv run portfolio --help
-```
-
-```
-Arguments:
-  campaign_filter    Campaign ID or "all" [default: all]
-                     IDs: buy_the_world, share_a_coke, holidays_coming,
-                          open_happiness, real_magic
 
 Options:
-  --backend          stub|openai  [default: stub]
-  --research         Run live web search per campaign
-  --tiers            Generate Conservative/Balanced/Bold improvement tiers
-  --no-open          Don't auto-open browser
-  -o, --out          Output directory  [default: output/]
+
+- `--backend openai|replicate|stub` — override `ALFRED_IMAGE_BACKEND`
+- `--no-open` — don't auto-open the browser
+- `-o, --out` — output directory (default `out/`)
+
+Typical runtime: 2–4 minutes (research is the long tail). Cost: roughly $0.50–$1.00 per run with Claude + gpt-image-1.
+
+## Project layout
+
+```
+baml_src/                  Typed BAML functions
+  clients.baml             LLM client definitions (Sonnet, SonnetLong, Opus, GeminiFlash)
+  dossier.baml             ExtractDossier → CompanyDossier
+  campaigns_history.baml   AnalyzePastCampaigns → PastCampaign[]
+  personas.baml            IdentifyPersonas → Persona[]
+  campaign.baml            GenerateCampaign / GenerateBoldCampaign → CampaignBrief
+  summarize.baml           Map-reduce research compression (Gemini)
+alfred/                    Python orchestration
+  research.py              Anthropic web_search agent loop
+  image_backends.py        OpenAI / Replicate / Stub backends
+  orchestrator.py          Pipeline: research → dossier → history → personas → campaigns
+  report.py                Jinja2 assembly
+  cli.py                   Typer entry point
+templates/
+  report.html.j2           Tabbed single-file HTML report
 ```
 
-Typical runtime: 2–4 min with `--research --tiers`. Cost: ~$0.50–$1.00 per full run.
+## Why these choices
+
+| Decision | Why |
+|---|---|
+| BAML over raw SDK calls | Typed outputs + playground testing. Each function is unit-testable in isolation, which is the right primitive for multi-step agent work. |
+| Claude `web_search_20250305` over Gemini Deep Research | Claude's tool returns in seconds, not 20 minutes. Faster to iterate during the build. |
+| Opus for Bold, Sonnet for the rest | Taste matters most on the risky creative — it's where a better model earns its keep. Sonnet is fine for extraction and on-brand concepts. |
+| `gpt-image-1` default, Flux + stub alternatives | `gpt-image-1` is the cheapest path to a decent ad mockup; `stub` lets the full pipeline run with no image API key so the code is demo-able anywhere. |
+| `AnalyzePastCampaigns` uses full raw research, not condensed | The map-reduce condensation aggressively truncates to ~3,000 chars. Campaign names, taglines, and dates are exactly the specifics that get lost — so the history function gets the uncompressed text. |
+| Tabbed HTML report, still one file | Each section (Brief, Ad History, Personas, and one tab per campaign) is navigable without breaking the single-file share model. Pure JS — no frameworks, no build step. |
+
+## Limits / non-goals
+
+- No persistence or multi-user — this is a desktop CLI, not a service.
+- No brand-safety/legal review pass on generated copy. A human still reads before anyone pitches.
+- Research tops out at ~8 `web_search` calls per run. It's a pitch-prep briefing, not an investigative report.
 
 ---
-
-## Project structure
-
-```
-coca-cola-portfolio/
-├── .env.example                # Secrets template (Alfred pattern)
-├── pyproject.toml              # UV project config + CLI entry point
-├── baml_src/
-│   ├── clients.baml            # AI model config
-│   ├── ad_analysis.baml        # Core analysis functions
-│   └── campaign_tiers.baml     # Conservative/Balanced/Bold (Alfred pattern)
-├── baml_client/                # Auto-generated — don't edit
-├── src/
-│   ├── cli.py                  # Typer CLI (Alfred pattern)
-│   ├── main.py                 # Direct entry point (no CLI)
-│   ├── campaigns.py            # Campaign data
-│   ├── analyzer.py             # BAML analysis + markdown export
-│   ├── orchestrator.py         # Parallel fan-out (Alfred pattern)
-│   ├── research.py             # Web search agent loop (Alfred pattern)
-│   ├── image_backends.py       # Stub SVG / OpenAI (Alfred pattern)
-│   ├── renderer.py             # HTML + PDF generation
-│   └── templates/
-│       ├── portfolio.html      # Index page
-│       └── ad_report.html      # Campaign detail page
-└── output/
-    ├── reports/                # Markdown
-    ├── site/                   # HTML portfolio
-    └── pdfs/                   # PDF exports
-```
-
----
-
-## Troubleshooting
-
-**`ModuleNotFoundError: No module named 'baml_client'`**
-→ Run `baml-cli generate`
-
-**API key error**
-→ `cp .env.example .env` then add your key
-
-**WeasyPrint on macOS**
-→ `brew install pango libffi`
-
-**WeasyPrint on Linux**
-→ `sudo apt-get install libpango-1.0-0 libpangoft2-1.0-0`

@@ -1,41 +1,51 @@
-// clients.baml
-// Single source of truth for all AI clients used across this project.
-// BAML reads ANTHROPIC_API_KEY automatically from the environment.
-//
-// Client routing (borrowed from Alfred):
-//   ClaudeClient  — default for all analysis functions (Sonnet, fast + cheap)
-//   SonnetClient  — Conservative + Balanced campaign tiers
-//   OpusClient    — Bold tier only (taste matters most on risky creative)
+// Claude clients for Alfred.
+// Sonnet for most work (fast + cheap + smart enough).
+// Opus for the "Bold" creative tier where taste matters most.
 
-// Required: tells baml-cli generate where to write the Python client
-generator target {
-  output_type "python/pydantic"
-  output_dir "../baml_client"
-  version "0.75.0"
-}
-
-client<llm> ClaudeClient {
+client<llm> ClaudeSonnet {
   provider anthropic
   options {
-    model "claude-sonnet-4-20250514"
+    model "claude-sonnet-4-6"
+    api_key env.ANTHROPIC_API_KEY
+    // Kept modest on purpose: Anthropic rate-limits count RESERVED output tokens
+    // against the input-TPM budget, so a smaller cap here reduces 429s on lower tiers.
+    max_tokens 2048
+  }
+}
+
+// Higher output cap for structured extraction tasks that produce longer arrays.
+client<llm> ClaudeSonnetLong {
+  provider anthropic
+  options {
+    model "claude-sonnet-4-6"
+    api_key env.ANTHROPIC_API_KEY
     max_tokens 4096
   }
 }
 
-client<llm> SonnetClient {
+client<llm> ClaudeOpus {
   provider anthropic
   options {
-    model "claude-sonnet-4-20250514"
-    max_tokens 2048
+    model "claude-opus-4-7"
+    api_key env.ANTHROPIC_API_KEY
+    max_tokens 4096
   }
 }
 
-// Alfred's key insight: use the best model only where taste matters most.
-// Bold tier uses Opus — the extra cost is worth it for the riskiest creative.
-client<llm> OpusClient {
-  provider anthropic
+// Gemini 2.5 Flash — cheap, fast, huge context. Used for the map-reduce
+// summarization pass that compresses raw research before it hits Claude,
+// which keeps us under Anthropic's input-TPM limits on lower API tiers.
+client<llm> GeminiFlash {
+  provider google-ai
   options {
-    model "claude-opus-4-5"
-    max_tokens 2048
+    model "gemini-2.5-flash"
+    api_key env.GOOGLE_API_KEY
   }
+}
+
+generator python_generator {
+  output_type "python/pydantic"
+  output_dir "../"
+  version "0.221.0"
+  default_client_mode sync
 }
