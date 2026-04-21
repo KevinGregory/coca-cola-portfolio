@@ -1,5 +1,3 @@
-# Alfred
-
 An agentic tool that turns a single input — a company name — into three differentiated ad campaign proposals (Conservative, Balanced, Bold), each with research-grounded strategy, ad copy, and a rendered creative mockup. One self-contained HTML report falls out the other end.
 
 Built with **Python + [BAML](https://docs.boundaryml.com/)** as a portfolio piece for an advertising-agency interview. The point is to show production use of modern agent tooling: web-search tool loops, typed LLM functions, parallel fan-out, and image generation — wired into one clean CLI.
